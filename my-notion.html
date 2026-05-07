@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Notion</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0d0d0d;
+    --bg-1: #141414;
+    --bg-2: #1c1c1c;
+    --bg-3: #242424;
+    --bg-4: #2e2e2e;
+    --bg-5: #3a3a3a;
+    --text-0: #f0f0f0;
+    --text-1: #c8c8c8;
+    --text-2: #8a8a8a;
+    --text-3: #555;
+    --accent: #7c6af7;
+    --accent-glow: rgba(124,106,247,0.18);
+    --accent-soft: rgba(124,106,247,0.10);
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --blue: #60a5fa;
+    --pink: #f472b6;
+    --orange: #fb923c;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --shadow: 0 8px 32px rgba(0,0,0,0.6);
+    --radius: 10px;
+    --sidebar-w: 260px;
+    --transition: 0.18s ease;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: var(--bg-0);
+    color: var(--text-0);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    font-size: 15px;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg-1);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    transition: width var(--transition), min-width var(--transition);
+  }
+  #sidebar.collapsed { width: 0; min-width: 0; }
+
+  .sidebar-header {
+    padding: 18px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-logo {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .sidebar-title { font-size: 15px; font-weight: 700; color: var(--text-0); }
+
+  /* Search */
+  .sidebar-search {
+    padding: 12px 12px 8px;
+  }
+  .search-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    transition: border-color var(--transition), background var(--transition);
+  }
+  .search-wrap:focus-within {
+    border-color: var(--accent);
+    background: var(--bg-4);
+  }
+  .search-wrap svg { color: var(--text-3); flex-shrink:0; }
+  .search-wrap input {
+    background: transparent; border: none; outline: none;
+    color: var(--text-0); font-size: 13px; font-family: inherit;
+    width: 100%;
+  }
+  .search-wrap input::placeholder { color: var(--text-3); }
+
+  /* Sidebar Sections */
+  .sidebar-section { padding: 4px 0; }
+  .sidebar-section-label {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 10px 16px 4px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 12px; margin: 0 6px;
+    border-radius: 7px; cursor: pointer;
+    color: var(--text-2); font-size: 13.5px;
+    transition: background var(--transition), color var(--transition);
+    user-select: none; position: relative;
+  }
+  .sidebar-item:hover { background: var(--bg-3); color: var(--text-0); }
+  .sidebar-item.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar-item .item-icon { font-size: 15px; flex-shrink:0; width:18px; text-align:center; }
+  .sidebar-item .item-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-item .item-badge {
+    font-size: 10px; background: var(--accent); color:#fff;
+    border-radius: 10px; padding: 1px 6px; font-weight:600;
+  }
+  .sidebar-item .item-star {
+    opacity: 0; font-size: 12px; color: var(--yellow);
+    transition: opacity var(--transition);
+  }
+  .sidebar-item:hover .item-star { opacity: 1; }
+  .sidebar-item .item-star.starred { opacity: 1; }
+
+  .sidebar-pages { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+  .sidebar-pages::-webkit-scrollbar { width: 4px; }
+  .sidebar-pages::-webkit-scrollbar-thumb { background: var(--bg-5); border-radius: 4px; }
+
+  .new-page-btn {
+    margin: 6px 12px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 7px;
+    cursor: pointer; color: var(--text-3); font-size: 13px;
+    border: 1px dashed var(--border); transition: all var(--transition);
+  }
+  .new-page-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+  .sidebar-bottom { padding: 12px; border-top: 1px solid var(--border); }
+  .tag-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px 10px; font-size: 11.5px;
+    color: var(--text-2); cursor: pointer; margin: 2px;
+    transition: all var(--transition);
+  }
+  .tag-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .tag-pill .dot { width:6px; height:6px; border-radius:50%; }
+
+  /* ── MAIN ── */
+  #main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* Topbar */
+  #topbar {
+    height: 50px; background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; padding: 0 20px;
+    flex-shrink: 0;
+  }
+  .topbar-toggle {
+    width:32px; height:32px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--text-2);
+    transition: background var(--transition), color var(--transition);
+    background: transparent; border:none;
+  }
+  .topbar-toggle:hover { background: var(--bg-3); color: var(--text-0); }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--text-2); font-size: 13px; flex:1;
+  }
+  .breadcrumb span { color: var(--text-0); font-weight: 500; }
+  .breadcrumb-sep { color: var(--text-3); }
+
+  .topbar-actions { display:flex; align-items:center; gap:6px; }
+  .top-btn {
+    display:flex; align-items:center; gap:5px;
+    padding: 5px 12px; border-radius:7px; font-size:12.5px;
+    cursor:pointer; border: none; font-family: inherit;
+    transition: all var(--transition);
+  }
+  .top-btn.ghost { background: transparent; color: var(--text-2); }
+  .top-btn.ghost:hover { background: var(--bg-3); color: var(--text-0); }
+  .top-btn.accent { background: var(--accent); color: #fff; font-weight:600; }
+  .top-btn.accent:hover { opacity: 0.88; box-shadow: 0 0 16px var(--accent-glow); }
+
+  /* ── CONTENT AREA ── */
+  #content-area { flex:1; overflow:hidden; position:relative; }
+
+  /* Views */
+  .view { display:none; height:100%; overflow-y:auto; }
+  .view.active { display:flex; flex-direction:column; }
+  .view::-webkit-scrollbar { width:6px; }
+  .view::-webkit-scrollbar-thumb { background:var(--bg-5); border-radius:4px; }
+
+  /* ── PAGE EDITOR ── */
+  #editor-view { padding: 0 0 80px; }
+
+  .page-header {
+    padding: 48px 80px 20px;
+    max-width: 860px; margin: 0 auto; width:100%;
+  }
+  .page-emoji-btn {
+    font-size: 48px; cursor:pointer; display:inline-block;
+    margin-bottom: 12px; transition: transform 0.15s;
+  }
+  .page-emoji-btn:hover { transform: scale(1.1); }
+  .page-title-input {
+    width: 100%; background: transparent; border: none; outline: none;
+    font-size: 36px; font-weight: 700; color: var(--text-0);
+    font-family: inherit; resize: none; line-height: 1.25;
+    caret-color: var(--accent);
+  }
+  .page-title-input::placeholder { color: var(--bg-5); }
+
+  .page-meta {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 80px 16px;
+    max-width: 860px; margin: 0 auto; width:100%;
+    flex-wrap:wrap;
+  }
+  .meta-item {
+    display:flex; align-items:center; gap:6px;
+    font-size: 12.5px; color: var(--text-2);
+  }
+  .meta-tag {
+    display:inline-flex; align-items:center; gap:4px;
+    background: var(--bg-3); border:1px solid var(--border);
+    border-radius:5px; padding:2px 8px; font-size:11.5px;
+    color:var(--text-2); cursor:pointer; transition: all var(--transition);
+  }
+  .meta-tag:hover { border-color: var(--accent); color: var(--accent); }
+  .meta-tag .tag-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+
+  .page-divider {
+    max-width: 860px; margin: 0 auto 4px;
+    border:none; border-top:1px solid var(--border); width:calc(100% - 160px);
+  }
+
+  /* Editor Toolbar */
+  .editor-toolbar {
+    display: flex; align-items: center; gap: 2px;
+    padding: 8px 80px;
+    max-width: 860px; margin: 0 auto; width:100%;
+    border-bottom: 1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .toolbar-btn {
+    width:30px; height:28px; border-radius:5px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:13px; color:var(--text-2);
+    border:none; background:transparent; font-family:inherit;
+    transition: all var(--transition);
+  }
+  .toolbar-btn:hover { background:var(--bg-3); color:var(--text-0); }
+  .toolbar-btn.active { background:var(--accent-soft); color:var(--accent); }
+  .toolbar-sep { width:1px; height:18px; background:var(--border); margin:0 4px; }
+
+  /* Editor Body */
+  .editor-body {
+    padding: 20px 80px;
+    max-width: 860px; margin: 0 auto; width:100%;
+  }
+  #editor {
+    min-height: 400px; outline: none;
+    font-size: 15px; line-height: 1.75; color: var(--text-0);
+    caret-color: var(--accent);
+  }
+  #editor:empty::before {
+    content: "'/' 를 입력해 블록을 추가하거나 자유롭게 작성해보세요...";
+    color: var(--text-3); pointer-events:none;
+  }
+  #editor h1 { font-size:28px; font-weight:700; margin:24px 0 8px; }
+  #editor h2 { font-size:22px; font-weight:600; margin:20px 0 6px; color:var(--text-0); }
+  #editor h3 { font-size:17px; font-weight:600; margin:16px 0 4px; color:var(--text-1); }
+  #editor p { margin: 4px 0; }
+  #editor ul, #editor ol { padding-left:24px; margin:4px 0; }
+  #editor li { margin:3px 0; }
+  #editor blockquote {
+    border-left:3px solid var(--accent); padding:8px 16px;
+    background:var(--accent-soft); border-radius:0 6px 6px 0; margin:8px 0;
+    color:var(--text-1);
+  }
+  #editor code {
+    font-family:'JetBrains Mono', monospace; font-size:13px;
+    background:var(--bg-3); padding:2px 6px; border-radius:4px; color:var(--accent);
+  }
+  #editor pre {
+    background:var(--bg-2); border:1px solid var(--border);
+    border-radius:8px; padding:16px; margin:12px 0; overflow-x:auto;
+  }
+  #editor pre code { background:none; padding:0; color:var(--text-1); }
+  #editor hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
+  #editor a { color:var(--accent); text-decoration:none; }
+  #editor a:hover { text-decoration:underline; }
+  #editor strong { color:var(--text-0); font-weight:700; }
+  #editor em { color:var(--text-1); font-style:italic; }
+  #editor mark { background:rgba(251,191,36,0.25); color:var(--yellow); border-radius:3px; padding:1px 3px; }
+
+  /* Slash menu */
+  #slash-menu {
+    position:fixed; background:var(--bg-2); border:1px solid var(--border);
+    border-radius:10px; box-shadow:var(--shadow); z-index:1000; min-width:220px;
+    display:none; overflow:hidden;
+  }
+  .slash-item {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 14px; cursor:pointer; font-size:13px;
+    transition:background var(--transition);
+  }
+  .slash-item:hover, .slash-item.selected { background:var(--bg-3); }
+  .slash-item .si-icon { width:28px; height:28px; border-radius:6px; background:var(--bg-4);
+    display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .slash-item .si-label { font-weight:500; color:var(--text-0); }
+  .slash-item .si-desc { font-size:11px; color:var(--text-3); margin-top:1px; }
+
+  /* ── TODO VIEW ── */
+  #todo-view { padding: 32px 40px; }
+  .view-title {
+    font-size:24px; font-weight:700; margin-bottom:6px; color:var(--text-0);
+  }
+  .view-subtitle { font-size:13px; color:var(--text-3); margin-bottom:28px; }
+
+  .todo-add {
+    display:flex; align-items:center; gap:10px;
+    background:var(--bg-2); border:1px solid var(--border);
+    border-radius:10px; padding:12px 16px; margin-bottom:24px;
+    transition:border-color var(--transition);
+  }
+  .todo-add:focus-within { border-color:var(--accent); }
+  .todo-add input {
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--text-0); font-size:14px; font-family:inherit;
+  }
+  .todo-add input::placeholder { color:var(--text-3); }
+  .todo-add-btn {
+    background:var(--accent); border:none; color:#fff;
+    border-radius:7px; padding:5px 14px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:opacity var(--transition);
+  }
+  .todo-add-btn:hover { opacity:0.85; }
+
+  .todo-filter {
+    display:flex; gap:6px; margin-bottom:16px;
+  }
+  .filter-btn {
+    padding:5px 14px; border-radius:20px; font-size:12.5px;
+    border:1px solid var(--border); background:transparent;
+    color:var(--text-2); cursor:pointer; font-family:inherit;
+    transition:all var(--transition);
+  }
+  .filter-btn:hover { border-color:var(--border-hover); color:var(--text-0); }
+  .filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .todo-group { margin-bottom:24px; }
+  .todo-group-label {
+    font-size:11px; font-weight:600; color:var(--text-3);
+    text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;
+  }
+
+  .todo-item {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:12px 14px; background:var(--bg-2); border:1px solid var(--border);
+    border-radius:9px; margin-bottom:6px; cursor:pointer;
+    transition:all var(--transition); position:relative;
+  }
+  .todo-item:hover { border-color:var(--border-hover); background:var(--bg-3); }
+  .todo-item.done { opacity:0.5; }
+  .todo-item.done .todo-text { text-decoration:line-through; color:var(--text-3); }
+
+  .todo-check {
+    width:18px; height:18px; border-radius:5px; border:2px solid var(--border);
+    flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center;
+    transition:all var(--transition); cursor:pointer;
+  }
+  .todo-check.checked { background:var(--accent); border-color:var(--accent); }
+  .todo-check.checked::after { content:'✓'; color:#fff; font-size:11px; font-weight:700; }
+
+  .todo-text-wrap { flex:1; }
+  .todo-text { font-size:14px; color:var(--text-0); line-height:1.4; }
+  .todo-meta { display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  .todo-tag {
+    font-size:10.5px; padding:1px 7px; border-radius:4px;
+    font-weight:500;
+  }
+  .todo-date { font-size:11px; color:var(--text-3); }
+
+  .todo-priority {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:7px;
+  }
+  .priority-high { background:var(--red); }
+  .priority-mid { background:var(--yellow); }
+  .priority-low { background:var(--blue); }
+
+  .todo-del {
+    position:absolute; right:10px; top:10px; opacity:0;
+    font-size:13px; color:var(--text-3); cursor:pointer; padding:2px 6px;
+    border-radius:5px; transition:all var(--transition);
+  }
+  .todo-item:hover .todo-del { opacity:1; }
+  .todo-del:hover { background:rgba(248,113,113,0.15); color:var(--red); }
+
+  /* ── HOME VIEW ── */
+  #home-view { padding:40px; }
+  .home-greeting { font-size:28px; font-weight:700; margin-bottom:6px; }
+  .home-sub { color:var(--text-2); font-size:14px; margin-bottom:36px; }
+  .home-stats {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    gap:12px; margin-bottom:32px;
+  }
+  .stat-card {
+    background:var(--bg-2); border:1px solid var(--border);
+    border-radius:12px; padding:18px; text-align:center;
+    transition:border-color var(--transition);
+  }
+  .stat-card:hover { border-color:var(--border-hover); }
+  .stat-num { font-size:28px; font-weight:700; color:var(--accent); }
+  .stat-label { font-size:12px; color:var(--text-3); margin-top:4px; }
+
+  .home-section { margin-bottom:28px; }
+  .home-section-title {
+    font-size:13px; font-weight:600; color:var(--text-3);
+    text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;
+  }
+  .home-pages {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px;
+  }
+  .home-page-card {
+    background:var(--bg-2); border:1px solid var(--border);
+    border-radius:10px; padding:16px; cursor:pointer;
+    transition:all var(--transition);
+  }
+  .home-page-card:hover { border-color:var(--border-hover); transform:translateY(-1px); box-shadow:var(--shadow); }
+  .hpc-emoji { font-size:20px; margin-bottom:8px; }
+  .hpc-title { font-size:13.5px; font-weight:600; color:var(--text-0); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hpc-date { font-size:11px; color:var(--text-3); margin-top:4px; }
+
+  /* Modal overlay for emoji / tag picker */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.5);
+    display:none; align-items:center; justify-content:center; z-index:2000;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:var(--bg-2); border:1px solid var(--border);
+    border-radius:14px; padding:24px; min-width:320px;
+    box-shadow:var(--shadow); animation:fadeUp .2s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .modal-title { font-size:15px; font-weight:700; margin-bottom:16px; color:var(--text-0); }
+  .modal-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; max-height:200px; overflow-y:auto; }
+  .emoji-opt { font-size:22px; cursor:pointer; padding:4px; border-radius:6px; text-align:center;
+    transition:background var(--transition); }
+  .emoji-opt:hover { background:var(--bg-4); }
+  .modal-input {
+    width:100%; background:var(--bg-3); border:1px solid var(--border);
+    border-radius:8px; padding:10px 12px; color:var(--text-0); font-family:inherit; font-size:14px;
+    outline:none; margin-bottom:12px; transition:border-color var(--transition);
+  }
+  .modal-input:focus { border-color:var(--accent); }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+  .modal-btn {
+    padding:7px 18px; border-radius:7px; font-size:13px; font-weight:600;
+    cursor:pointer; border:none; font-family:inherit; transition:all var(--transition);
+  }
+  .modal-btn.cancel { background:var(--bg-4); color:var(--text-2); }
+  .modal-btn.cancel:hover { color:var(--text-0); }
+  .modal-btn.confirm { background:var(--accent); color:#fff; }
+  .modal-btn.confirm:hover { opacity:0.85; }
+
+  .tag-color-opts { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .tag-color-opt {
+    width:22px; height:22px; border-radius:50%; cursor:pointer;
+    border:2px solid transparent; transition:all var(--transition);
+  }
+  .tag-color-opt.selected { border-color:#fff; transform:scale(1.2); }
+
+  /* Tag colors */
+  .tag-purple { background:rgba(124,106,247,0.2); color:#a78bfa; border:1px solid rgba(124,106,247,0.3); }
+  .tag-green  { background:rgba(74,222,128,0.15); color:#4ade80; border:1px solid rgba(74,222,128,0.25); }
+  .tag-blue   { background:rgba(96,165,250,0.15); color:#60a5fa; border:1px solid rgba(96,165,250,0.25); }
+  .tag-red    { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.25); }
+  .tag-yellow { background:rgba(251,191,36,0.15);  color:#fbbf24; border:1px solid rgba(251,191,36,0.25); }
+  .tag-pink   { background:rgba(244,114,182,0.15); color:#f472b6; border:1px solid rgba(244,114,182,0.25); }
+  .tag-orange { background:rgba(251,146,60,0.15);  color:#fb923c; border:1px solid rgba(251,146,60,0.25); }
+
+  /* Notification toast */
+  #toast {
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-3); border:1px solid var(--border);
+    border-radius:10px; padding:10px 20px; font-size:13px; color:var(--text-0);
+    opacity:0; pointer-events:none; transition:all 0.3s ease;
+    z-index:9999; box-shadow:var(--shadow);
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* Scrollbar global */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--bg-5); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">N</div>
+    <div class="sidebar-title">My Notion</div>
+  </div>
+
+  <div class="sidebar-search">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="검색..." />
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-item active" id="nav-home" onclick="switchView('home')">
+      <span class="item-icon">🏠</span>
+      <span class="item-label">홈</span>
+    </div>
+    <div class="sidebar-item" id="nav-todo" onclick="switchView('todo')">
+      <span class="item-icon">✅</span>
+      <span class="item-label">할 일 목록</span>
+      <span class="item-badge" id="todo-badge">0</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">⭐ 즐겨찾기</div>
+    <div id="favorites-list"></div>
+  </div>
+
+  <div class="sidebar-section" style="flex:1;">
+    <div class="sidebar-section-label">📄 페이지</div>
+    <div id="pages-list" class="sidebar-pages"></div>
+    <div class="new-page-btn" onclick="createNewPage()">
+      <span>＋</span>
+      <span>새 페이지 만들기</span>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-section-label" style="padding:0 0 6px;">🏷 태그</div>
+    <div id="tags-list"></div>
+    <div class="tag-pill" onclick="showTagModal()" style="margin-top:4px;">
+      <span>＋</span><span>태그 추가</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- Topbar -->
+  <div id="topbar">
+    <button class="topbar-toggle" onclick="toggleSidebar()" title="사이드바 토글">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="breadcrumb" id="breadcrumb">
+      <span>홈</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="top-btn ghost" id="star-btn" onclick="toggleFavorite()" style="display:none;">☆ 즐겨찾기</button>
+      <button class="top-btn ghost" onclick="exportPage()" id="export-btn" style="display:none;">📤 내보내기</button>
+      <button class="top-btn ghost" id="drive-save-btn" onclick="saveToDrive()" style="display:none;">☁️ Drive 저장</button>
+      <button class="top-btn ghost" id="drive-load-btn" onclick="loadFromDrive()" style="display:none;">📂 Drive 불러오기</button>
+      <button class="top-btn ghost" id="drive-login-btn" onclick="driveLogin()">🔗 Drive 연동</button>
+      <button class="top-btn accent" onclick="createNewPage()">＋ 새 페이지</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="content-area">
+
+    <!-- HOME VIEW -->
+    <div class="view active" id="home-view">
+      <div class="home-greeting" id="home-greeting">안녕하세요! 👋</div>
+      <div class="home-sub" id="home-date-sub"></div>
+      <div class="home-stats">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-pages">0</div>
+          <div class="stat-label">📄 전체 페이지</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-todos">0</div>
+          <div class="stat-label">✅ 할 일 남음</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-favorites">0</div>
+          <div class="stat-label">⭐ 즐겨찾기</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-tags">0</div>
+          <div class="stat-label">🏷 태그 수</div>
+        </div>
+      </div>
+      <div class="home-section">
+        <div class="home-section-title">최근 페이지</div>
+        <div class="home-pages" id="recent-pages">
+          <div style="color:var(--text-3);font-size:13px;">아직 페이지가 없어요. 새 페이지를 만들어보세요!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDITOR VIEW -->
+    <div class="view" id="editor-view">
+      <div class="page-header">
+        <div class="page-emoji-btn" id="page-emoji" onclick="showEmojiPicker()">📄</div>
+        <textarea class="page-title-input" id="page-title" placeholder="제목 없음" rows="1"
+          oninput="autoResize(this);saveCurrentPage()"></textarea>
+      </div>
+      <div class="page-meta">
+        <div class="meta-item">📅 <span id="page-date-display"></span></div>
+        <div id="page-tags-display"></div>
+        <div class="meta-tag" onclick="showPageTagModal()">＋ 태그</div>
+      </div>
+      <hr class="page-divider">
+      <div class="editor-toolbar">
+        <button class="toolbar-btn" onclick="execCmd('bold')" title="굵게"><b>B</b></button>
+        <button class="toolbar-btn" onclick="execCmd('italic')" title="기울임"><i>I</i></button>
+        <button class="toolbar-btn" onclick="execCmd('underline')" title="밑줄"><u>U</u></button>
+        <button class="toolbar-btn" onclick="execCmd('strikeThrough')" title="취소선"><s>S</s></button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" onclick="insertBlock('h1')" title="제목1">H1</button>
+        <button class="toolbar-btn" onclick="insertBlock('h2')" title="제목2">H2</button>
+        <button class="toolbar-btn" onclick="insertBlock('h3')" title="제목3">H3</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" onclick="execCmd('insertUnorderedList')" title="목록">≡</button>
+        <button class="toolbar-btn" onclick="execCmd('insertOrderedList')" title="번호목록">1.</button>
+        <button class="toolbar-btn" onclick="insertBlock('blockquote')" title="인용">❝</button>
+        <button class="toolbar-btn" onclick="insertBlock('code')" title="코드">&lt;/&gt;</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" onclick="insertBlock('hr')" title="구분선">—</button>
+        <button class="toolbar-btn" onclick="execCmd('hiliteColor','rgba(251,191,36,0.25)')" title="형광펜">🖍</button>
+        <button class="toolbar-btn" onclick="execCmd('removeFormat')" title="서식 제거">✕</button>
+      </div>
+      <div class="editor-body">
+        <div id="editor" contenteditable="true" spellcheck="false"
+          onkeyup="handleEditorKey(event);saveCurrentPage()"
+          oninput="saveCurrentPage()"
+        ></div>
+      </div>
+    </div>
+
+    <!-- TODO VIEW -->
+    <div class="view" id="todo-view">
+      <div class="view-title">✅ 할 일 목록</div>
+      <div class="view-subtitle">오늘 할 일을 정리해보세요</div>
+      <div class="todo-add">
+        <span style="font-size:18px;color:var(--text-3);">＋</span>
+        <input type="text" id="todo-input" placeholder="새 할 일 추가..." onkeydown="if(event.key==='Enter')addTodo()" />
+        <select id="todo-priority" style="background:var(--bg-4);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text-1);font-size:12px;outline:none;">
+          <option value="high">🔴 높음</option>
+          <option value="mid" selected>🟡 보통</option>
+          <option value="low">🔵 낮음</option>
+        </select>
+        <button class="todo-add-btn" onclick="addTodo()">추가</button>
+      </div>
+      <div class="todo-filter">
+        <button class="filter-btn active" onclick="setFilter('all',this)">전체</button>
+        <button class="filter-btn" onclick="setFilter('active',this)">진행 중</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">완료</button>
+      </div>
+      <div id="todo-list"></div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /main -->
+
+<!-- SLASH MENU -->
+<div id="slash-menu">
+  <div class="slash-item" onclick="insertSlashBlock('h1')">
+    <div class="si-icon">H1</div>
+    <div><div class="si-label">제목 1</div><div class="si-desc">큰 제목 섹션</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('h2')">
+    <div class="si-icon">H2</div>
+    <div><div class="si-label">제목 2</div><div class="si-desc">중간 제목</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('h3')">
+    <div class="si-icon">H3</div>
+    <div><div class="si-label">제목 3</div><div class="si-desc">작은 제목</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('bullet')">
+    <div class="si-icon">•</div>
+    <div><div class="si-label">글머리 기호</div><div class="si-desc">목록 항목</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('numbered')">
+    <div class="si-icon">1.</div>
+    <div><div class="si-label">번호 목록</div><div class="si-desc">순서 있는 목록</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('blockquote')">
+    <div class="si-icon">❝</div>
+    <div><div class="si-label">인용</div><div class="si-desc">인용문 블록</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('code')">
+    <div class="si-icon">&lt;/&gt;</div>
+    <div><div class="si-label">코드</div><div class="si-desc">코드 블록</div></div>
+  </div>
+  <div class="slash-item" onclick="insertSlashBlock('divider')">
+    <div class="si-icon">—</div>
+    <div><div class="si-label">구분선</div><div class="si-desc">수평선 삽입</div></div>
+  </div>
+</div>
+
+<!-- EMOJI PICKER MODAL -->
+<div class="modal-overlay" id="emoji-modal">
+  <div class="modal-box">
+    <div class="modal-title">이모지 선택</div>
+    <div class="modal-grid" id="emoji-grid"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('emoji-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAG MODAL -->
+<div class="modal-overlay" id="tag-modal">
+  <div class="modal-box">
+    <div class="modal-title">새 태그 만들기</div>
+    <input class="modal-input" id="tag-name-input" placeholder="태그 이름..." />
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:8px;">색상 선택</div>
+    <div class="tag-color-opts" id="tag-color-opts">
+      <div class="tag-color-opt selected" style="background:#7c6af7;" data-color="purple" onclick="selectTagColor(this)"></div>
+      <div class="tag-color-opt" style="background:#4ade80;" data-color="green" onclick="selectTagColor(this)"></div>
+      <div class="tag-color-opt" style="background:#60a5fa;" data-color="blue" onclick="selectTagColor(this)"></div>
+      <div class="tag-color-opt" style="background:#f87171;" data-color="red" onclick="selectTagColor(this)"></div>
+      <div class="tag-color-opt" style="background:#fbbf24;" data-color="yellow" onclick="selectTagColor(this)"></div>
+      <div class="tag-color-opt" style="background:#f472b6;" data-color="pink" onclick="selectTagColor(this)"></div>
+      <div class="tag-color-opt" style="background:#fb923c;" data-color="orange" onclick="selectTagColor(this)"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('tag-modal')">취소</button>
+      <button class="modal-btn confirm" onclick="addTag()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE TAG MODAL -->
+<div class="modal-overlay" id="page-tag-modal">
+  <div class="modal-box">
+    <div class="modal-title">태그 선택</div>
+    <div id="page-tag-opts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('page-tag-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let state = {
+  pages: [],
+  todos: [],
+  tags: [],
+  currentPageId: null,
+  currentView: 'home',
+  todoFilter: 'all',
+  sidebarOpen: true,
+};
+
+const EMOJIS = ['📄','📝','📖','📚','✏️','🎯','🌟','💡','🔑','🏆','📊','🗂️','🎨','🧠','💼','📌','🌙','🌈','🔥','❤️','🚀','⚡','🎵','🌿','📷','🏠','✈️','🎮','📱','💻','🌸','🍀','🦋','🌊','🍎','☕','🌙','⭐','🔮','🌺'];
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+function init() {
+  loadState();
+  setGreeting();
+  renderAll();
+  updateStats();
+  buildEmojiGrid();
+
+  // Sample data if empty
+  if (state.pages.length === 0 && state.todos.length === 0) {
+    loadSampleData();
+  }
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', handleSearch);
+}
+
+function loadSampleData() {
+  state.tags = [
+    { id: uid(), name: '일기', color: 'purple' },
+    { id: uid(), name: '공부', color: 'blue' },
+    { id: uid(), name: '주식', color: 'green' },
+    { id: uid(), name: '업무', color: 'orange' },
+  ];
+  const tag1 = state.tags[0].id, tag2 = state.tags[1].id;
+
+  state.pages = [
+    {
+      id: uid(), emoji: '📖', title: '오늘 읽은 책 메모',
+      content: '<h2>원씽 (The ONE Thing)</h2><p>오늘 읽은 책에서 가장 인상 깊었던 부분은 하나의 일에 집중하는 것이 얼마나 중요한지에 대한 내용이었다.</p><blockquote>지금 할 수 있는 <strong>하나</strong>의 가장 중요한 일은 무엇인가?</blockquote><p>이 질문을 매일 아침 스스로에게 던져보기로 했다.</p>',
+      date: dateStr(), tags: [tag1], starred: true,
+    },
+    {
+      id: uid(), emoji: '📊', title: '주식 공부 - 재무제표 기초',
+      content: '<h2>재무제표 3가지</h2><p>오늘은 재무제표 기초를 정리했다.</p><ul><li><strong>손익계산서</strong> - 일정 기간 동안의 수익과 비용</li><li><strong>대차대조표</strong> - 특정 시점의 자산, 부채, 자본</li><li><strong>현금흐름표</strong> - 실제 현금의 흐름</li></ul><h3>오늘의 핵심</h3><p>PER(주가수익비율) = 주가 / 주당순이익. 낮을수록 저평가 가능성!</p>',
+      date: dateStr(-1), tags: [tag2], starred: false,
+    },
+  ];
+
+  state.todos = [
+    { id: uid(), text: '원씽 4장 읽기', done: false, priority: 'high', date: dateStr() },
+    { id: uid(), text: '삼성전자 실적 발표 확인', done: false, priority: 'mid', date: dateStr() },
+    { id: uid(), text: '주간 일기 작성', done: true, priority: 'low', date: dateStr(-1) },
+  ];
+
+  saveState();
+  renderAll();
+  updateStats();
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function dateStr(offsetDays=0) {
+  const d = new Date(); d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().split('T')[0];
+}
+function formatDate(str) {
+  if(!str) return '';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+}
+
+function saveState() { localStorage.setItem('mynotion_state', JSON.stringify(state)); }
+function loadState() {
+  try {
+    const s = localStorage.getItem('mynotion_state');
+    if(s) state = JSON.parse(s);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════
+function switchView(view, pageId) {
+  state.currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item[id^="nav-"]').forEach(i => i.classList.remove('active'));
+  document.getElementById('star-btn').style.display = 'none';
+  document.getElementById('export-btn').style.display = 'none';
+
+  if(view === 'home') {
+    document.getElementById('home-view').classList.add('active');
+    document.getElementById('nav-home').classList.add('active');
+    document.getElementById('breadcrumb').innerHTML = '<span>홈</span>';
+    state.currentPageId = null;
+    renderHome();
+  } else if(view === 'todo') {
+    document.getElementById('todo-view').classList.add('active');
+    document.getElementById('nav-todo').classList.add('active');
+    document.getElementById('breadcrumb').innerHTML = '<span>할 일 목록</span>';
+    state.currentPageId = null;
+    renderTodos();
+  } else if(view === 'editor' && pageId) {
+    document.getElementById('editor-view').classList.add('active');
+    state.currentPageId = pageId;
+    document.getElementById('star-btn').style.display = '';
+    document.getElementById('export-btn').style.display = '';
+    loadPageIntoEditor(pageId);
+  }
+
+  renderSidebar();
+  updateStats();
+}
+
+// ═══════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════
+function toggleSidebar() {
+  state.sidebarOpen = !state.sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed', !state.sidebarOpen);
+}
+
+function renderSidebar() {
+  renderPagesList();
+  renderFavoritesList();
+  renderTagsList();
+}
+
+function renderPagesList() {
+  const list = document.getElementById('pages-list');
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const pages = state.pages.filter(p => !query || p.title.toLowerCase().includes(query) || (p.content||'').toLowerCase().includes(query));
+
+  list.innerHTML = pages.map(p => `
+    <div class="sidebar-item ${state.currentPageId===p.id?'active':''}" onclick="switchView('editor','${p.id}')">
+      <span class="item-icon">${p.emoji||'📄'}</span>
+      <span class="item-label">${p.title||'제목 없음'}</span>
+      <span class="item-star ${p.starred?'starred':''}" onclick="event.stopPropagation();quickStar('${p.id}')">⭐</span>
+    </div>
+  `).join('');
+}
+
+function renderFavoritesList() {
+  const list = document.getElementById('favorites-list');
+  const favs = state.pages.filter(p => p.starred);
+  if(favs.length === 0) {
+    list.innerHTML = '<div style="padding:4px 16px;font-size:12px;color:var(--text-3);">즐겨찾기 없음</div>';
+    return;
+  }
+  list.innerHTML = favs.map(p => `
+    <div class="sidebar-item ${state.currentPageId===p.id?'active':''}" onclick="switchView('editor','${p.id}')">
+      <span class="item-icon">${p.emoji||'📄'}</span>
+      <span class="item-label">${p.title||'제목 없음'}</span>
+    </div>
+  `).join('');
+}
+
+function renderTagsList() {
+  const list = document.getElementById('tags-list');
+  list.innerHTML = state.tags.map(t => `
+    <span class="tag-pill" onclick="filterByTag('${t.id}')">
+      <span class="dot" style="background:var(--${t.color})"></span>${t.name}
+    </span>
+  `).join('');
+}
+
+function quickStar(id) {
+  const p = state.pages.find(p => p.id === id);
+  if(p) { p.starred = !p.starred; saveState(); renderSidebar(); updateStats(); }
+}
+
+function filterByTag(tagId) {
+  switchView('home');
+  renderHome(tagId);
+}
+
+// ═══════════════════════════════
+// HOME
+// ═══════════════════════════════
+function setGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요';
+  document.getElementById('home-greeting').textContent = g + '! 👋';
+  document.getElementById('home-date-sub').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+}
+
+function renderHome(filterTag) {
+  const recent = document.getElementById('recent-pages');
+  let pages = [...state.pages].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  if(filterTag) pages = pages.filter(p => p.tags && p.tags.includes(filterTag));
+
+  if(pages.length === 0) {
+    recent.innerHTML = '<div style="color:var(--text-3);font-size:13px;">페이지가 없어요.</div>';
+    return;
+  }
+  recent.innerHTML = pages.slice(0,8).map(p => `
+    <div class="home-page-card" onclick="switchView('editor','${p.id}')">
+      <div class="hpc-emoji">${p.emoji||'📄'}</div>
+      <div class="hpc-title">${p.title||'제목 없음'}</div>
+      <div class="hpc-date">${formatDate(p.date)}</div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('stat-pages').textContent = state.pages.length;
+  document.getElementById('stat-todos').textContent = state.todos.filter(t=>!t.done).length;
+  document.getElementById('stat-favorites').textContent = state.pages.filter(p=>p.starred).length;
+  document.getElementById('stat-tags').textContent = state.tags.length;
+  // badge
+  const remaining = state.todos.filter(t=>!t.done).length;
+  const badge = document.getElementById('todo-badge');
+  badge.textContent = remaining;
+  badge.style.display = remaining > 0 ? '' : 'none';
+}
+
+// ═══════════════════════════════
+// PAGES
+// ═══════════════════════════════
+function createNewPage() {
+  const page = {
+    id: uid(), emoji: '📄',
+    title: '', content: '',
+    date: dateStr(), tags: [], starred: false,
+  };
+  state.pages.unshift(page);
+  saveState();
+  switchView('editor', page.id);
+  setTimeout(() => document.getElementById('page-title').focus(), 100);
+}
+
+function loadPageIntoEditor(id) {
+  const p = state.pages.find(p => p.id === id);
+  if(!p) return;
+  document.getElementById('page-emoji').textContent = p.emoji || '📄';
+  const title = document.getElementById('page-title');
+  title.value = p.title || '';
+  autoResize(title);
+  document.getElementById('page-date-display').textContent = formatDate(p.date);
+  document.getElementById('editor').innerHTML = p.content || '';
+  document.getElementById('breadcrumb').innerHTML = `<span style="color:var(--text-2)">페이지</span><span class="breadcrumb-sep">›</span><span>${p.title||'제목 없음'}</span>`;
+  updateStarBtn(p);
+  renderPageTags(p);
+}
+
+function saveCurrentPage() {
+  if(!state.currentPageId) return;
+  const p = state.pages.find(p => p.id === state.currentPageId);
+  if(!p) return;
+  p.title = document.getElementById('page-title').value;
+  p.content = document.getElementById('editor').innerHTML;
+  p.emoji = document.getElementById('page-emoji').textContent;
+  document.getElementById('breadcrumb').innerHTML = `<span style="color:var(--text-2)">페이지</span><span class="breadcrumb-sep">›</span><span>${p.title||'제목 없음'}</span>`;
+  saveState();
+  renderPagesList();
+  renderFavoritesList();
+}
+
+function toggleFavorite() {
+  const p = state.pages.find(p => p.id === state.currentPageId);
+  if(!p) return;
+  p.starred = !p.starred;
+  saveState();
+  updateStarBtn(p);
+  renderFavoritesList();
+  updateStats();
+  showToast(p.starred ? '⭐ 즐겨찾기에 추가됐어요!' : '즐겨찾기에서 제거됐어요');
+}
+
+function updateStarBtn(p) {
+  const btn = document.getElementById('star-btn');
+  btn.textContent = p.starred ? '⭐ 즐겨찾기됨' : '☆ 즐겨찾기';
+  btn.style.color = p.starred ? 'var(--yellow)' : '';
+}
+
+function exportPage() {
+  const p = state.pages.find(p => p.id === state.currentPageId);
+  if(!p) return;
+  const blob = new Blob([`# ${p.title}\n\n${p.content.replace(/<[^>]+>/g,'')}`], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (p.title||'page') + '.txt';
+  a.click();
+  showToast('📤 내보내기 완료!');
+}
+
+// ═══════════════════════════════
+// EDITOR
+// ═══════════════════════════════
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function execCmd(cmd, val) {
+  document.getElementById('editor').focus();
+  document.execCommand(cmd, false, val || null);
+  saveCurrentPage();
+}
+
+function insertBlock(type) {
+  document.getElementById('editor').focus();
+  const cmds = {
+    h1: () => document.execCommand('formatBlock', false, 'h1'),
+    h2: () => document.execCommand('formatBlock', false, 'h2'),
+    h3: () => document.execCommand('formatBlock', false, 'h3'),
+    blockquote: () => document.execCommand('formatBlock', false, 'blockquote'),
+    code: () => document.execCommand('insertHTML', false, '<code>코드</code>'),
+    hr: () => document.execCommand('insertHTML', false, '<hr>'),
+  };
+  if(cmds[type]) cmds[type]();
+  saveCurrentPage();
+}
+
+// Slash command
+let slashStart = null;
+function handleEditorKey(e) {
+  const editor = document.getElementById('editor');
+  const menu = document.getElementById('slash-menu');
+
+  if(e.key === '/') {
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    slashStart = { x: rect.left, y: rect.bottom };
+    menu.style.left = rect.left + 'px';
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.display = 'block';
+  } else if(e.key === 'Escape') {
+    menu.style.display = 'none';
+  } else {
+    setTimeout(() => {
+      const text = window.getSelection().anchorNode?.textContent || '';
+      if(!text.includes('/')) menu.style.display = 'none';
+    }, 0);
+  }
+}
+
+function insertSlashBlock(type) {
+  const menu = document.getElementById('slash-menu');
+  menu.style.display = 'none';
+  document.getElementById('editor').focus();
+
+  // Remove slash character
+  const sel = window.getSelection();
+  if(sel.rangeCount) {
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    if(node.textContent.includes('/')) {
+      node.textContent = node.textContent.replace('/','');
+    }
+  }
+
+  const blockMap = {
+    h1: 'h1', h2: 'h2', h3: 'h3',
+    blockquote: 'blockquote',
+    bullet: () => document.execCommand('insertUnorderedList'),
+    numbered: () => document.execCommand('insertOrderedList'),
+    code: () => document.execCommand('insertHTML',false,'<pre><code>코드를 입력하세요</code></pre>'),
+    divider: () => document.execCommand('insertHTML',false,'<hr>'),
+  };
+  const action = blockMap[type];
+  if(typeof action === 'function') action();
+  else document.execCommand('formatBlock', false, action);
+  saveCurrentPage();
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('slash-menu');
+  if(!menu.contains(e.target)) menu.style.display = 'none';
+});
+
+// ═══════════════════════════════
+// TODOS
+// ═══════════════════════════════
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const priority = document.getElementById('todo-priority').value;
+  state.todos.unshift({ id: uid(), text, done: false, priority, date: dateStr() });
+  input.value = '';
+  saveState(); renderTodos(); updateStats();
+  showToast('✅ 할 일이 추가됐어요!');
+}
+
+function setFilter(f, btn) {
+  state.todoFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTodos();
+}
+
+function renderTodos() {
+  const list = document.getElementById('todo-list');
+  let todos = state.todos;
+  if(state.todoFilter === 'active') todos = todos.filter(t => !t.done);
+  if(state.todoFilter === 'done') todos = todos.filter(t => t.done);
+
+  if(todos.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3);font-size:14px;">할 일이 없어요 🎉</div>';
+    return;
+  }
+
+  const active = todos.filter(t => !t.done);
+  const done = todos.filter(t => t.done);
+
+  let html = '';
+  if(active.length) {
+    html += `<div class="todo-group"><div class="todo-group-label">진행 중 (${active.length})</div>`;
+    html += active.map(t => todoItem(t)).join('');
+    html += '</div>';
+  }
+  if(done.length && state.todoFilter !== 'active') {
+    html += `<div class="todo-group"><div class="todo-group-label">완료 (${done.length})</div>`;
+    html += done.map(t => todoItem(t)).join('');
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function todoItem(t) {
+  const pClass = t.priority === 'high' ? 'priority-high' : t.priority === 'mid' ? 'priority-mid' : 'priority-low';
+  return `
+    <div class="todo-item ${t.done?'done':''}">
+      <div class="todo-priority ${pClass}"></div>
+      <div class="todo-check ${t.done?'checked':''}" onclick="toggleTodo('${t.id}')"></div>
+      <div class="todo-text-wrap">
+        <div class="todo-text">${t.text}</div>
+        <div class="todo-meta">
+          <span class="todo-date">${formatDate(t.date)}</span>
+        </div>
+      </div>
+      <span class="todo-del" onclick="deleteTodo('${t.id}')">✕</span>
+    </div>
+  `;
+}
+
+function toggleTodo(id) {
+  const t = state.todos.find(t => t.id === id);
+  if(t) { t.done = !t.done; saveState(); renderTodos(); updateStats(); }
+}
+function deleteTodo(id) {
+  state.todos = state.todos.filter(t => t.id !== id);
+  saveState(); renderTodos(); updateStats();
+}
+
+// ═══════════════════════════════
+// TAGS
+// ═══════════════════════════════
+let newTagColor = 'purple';
+function showTagModal() {
+  document.getElementById('tag-name-input').value = '';
+  newTagColor = 'purple';
+  document.querySelectorAll('.tag-color-opt').forEach(o => o.classList.toggle('selected', o.dataset.color === 'purple'));
+  document.getElementById('tag-modal').classList.add('open');
+  setTimeout(() => document.getElementById('tag-name-input').focus(), 100);
+}
+function selectTagColor(el) {
+  newTagColor = el.dataset.color;
+  document.querySelectorAll('.tag-color-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function addTag() {
+  const name = document.getElementById('tag-name-input').value.trim();
+  if(!name) return;
+  if(state.tags.find(t => t.name === name)) { showToast('이미 있는 태그예요'); return; }
+  state.tags.push({ id: uid(), name, color: newTagColor });
+  saveState(); renderTagsList(); updateStats();
+  closeModal('tag-modal');
+  showToast('🏷 태그가 추가됐어요!');
+}
+
+function showPageTagModal() {
+  const opts = document.getElementById('page-tag-opts');
+  const page = state.pages.find(p => p.id === state.currentPageId);
+  if(!page) return;
+  opts.innerHTML = state.tags.map(t => `
+    <span class="tag-pill tag-${t.color}" onclick="togglePageTag('${t.id}')" id="ptag-${t.id}" style="${page.tags?.includes(t.id)?'box-shadow:0 0 0 2px var(--accent);':''}">
+      <span class="dot" style="background:var(--${t.color})"></span>${t.name} ${page.tags?.includes(t.id)?'✓':''}
+    </span>
+  `).join('') || '<div style="color:var(--text-3);font-size:13px;">태그가 없어요. 먼저 태그를 만들어보세요!</div>';
+  document.getElementById('page-tag-modal').classList.add('open');
+}
+function togglePageTag(tagId) {
+  const p = state.pages.find(p => p.id === state.currentPageId);
+  if(!p) return;
+  if(!p.tags) p.tags = [];
+  if(p.tags.includes(tagId)) p.tags = p.tags.filter(id => id !== tagId);
+  else p.tags.push(tagId);
+  saveState();
+  renderPageTags(p);
+  showPageTagModal();
+}
+function renderPageTags(page) {
+  const el = document.getElementById('page-tags-display');
+  if(!page.tags || !page.tags.length) { el.innerHTML = ''; return; }
+  el.innerHTML = page.tags.map(tid => {
+    const t = state.tags.find(t => t.id === tid);
+    return t ? `<span class="meta-tag"><span class="tag-dot" style="background:var(--${t.color})"></span>${t.name}</span>` : '';
+  }).join('');
+}
+
+// ═══════════════════════════════
+// EMOJI
+// ═══════════════════════════════
+function buildEmojiGrid() {
+  document.getElementById('emoji-grid').innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt" onclick="selectEmoji('${e}')">${e}</div>`
+  ).join('');
+}
+function showEmojiPicker() { document.getElementById('emoji-modal').classList.add('open'); }
+function selectEmoji(e) {
+  document.getElementById('page-emoji').textContent = e;
+  closeModal('emoji-modal');
+  saveCurrentPage();
+}
+
+// ═══════════════════════════════
+// SEARCH
+// ═══════════════════════════════
+function handleSearch(e) {
+  const q = e.target.value.toLowerCase();
+  if(!q) { renderPagesList(); return; }
+  renderPagesList();
+}
+
+// ═══════════════════════════════
+// UTILS
+// ═══════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function renderAll() { renderSidebar(); renderHome(); renderTodos(); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if(e.target === o) o.classList.remove('open'); });
+});
+
+// Tag input enter key
+document.getElementById('tag-name-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter') addTag();
+});
+
+init();
+
+// ═══════════════════════════════
+// GOOGLE DRIVE 연동
+// ═══════════════════════════════
+const CLIENT_ID = '883456782408-4g2uuv8g798apd67aeavdsqb0fha3ul1.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const FILE_NAME = 'my-notion-data.json';
+let driveAccessToken = null;
+let driveFileId = null;
+
+function driveLogin() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (response) => {
+      if(response.error) {
+        showToast('❌ Google 로그인 실패: ' + response.error);
+        return;
+      }
+      driveAccessToken = response.access_token;
+      document.getElementById('drive-login-btn').textContent = '✅ Drive 연동됨';
+      document.getElementById('drive-login-btn').style.color = 'var(--green)';
+      document.getElementById('drive-save-btn').style.display = '';
+      document.getElementById('drive-load-btn').style.display = '';
+      showToast('✅ Google Drive 연동 완료!');
+    },
+  });
+  client.requestAccessToken();
+}
+
+async function saveToDrive() {
+  if(!driveAccessToken) { showToast('먼저 Drive 연동을 해주세요!'); return; }
+  showToast('☁️ Drive에 저장 중...');
+
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+
+  try {
+    // 기존 파일 있는지 확인
+    if(!driveFileId) {
+      const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&spaces=drive`,
+        { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+      );
+      const searchData = await searchRes.json();
+      if(searchData.files && searchData.files.length > 0) {
+        driveFileId = searchData.files[0].id;
+      }
+    }
+
+    let res;
+    if(driveFileId) {
+      // 기존 파일 업데이트
+      res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${driveAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: blob,
+        }
+      );
+    } else {
+      // 새 파일 생성
+      const metadata = { name: FILE_NAME, mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', blob);
+      res = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${driveAccessToken}` },
+          body: form,
+        }
+      );
+      const fileData = await res.json();
+      driveFileId = fileData.id;
+    }
+
+    if(res.ok) showToast('✅ Google Drive에 저장 완료!');
+    else showToast('❌ 저장 실패. 다시 시도해주세요.');
+  } catch(e) {
+    showToast('❌ 오류: ' + e.message);
+  }
+}
+
+async function loadFromDrive() {
+  if(!driveAccessToken) { showToast('먼저 Drive 연동을 해주세요!'); return; }
+  showToast('📂 Drive에서 불러오는 중...');
+
+  try {
+    // 파일 검색
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&spaces=drive`,
+      { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+    );
+    const searchData = await searchRes.json();
+
+    if(!searchData.files || searchData.files.length === 0) {
+      showToast('Drive에 저장된 데이터가 없어요!');
+      return;
+    }
+
+    driveFileId = searchData.files[0].id;
+
+    // 파일 내용 다운로드
+    const fileRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+      { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+    );
+    const loadedState = await fileRes.json();
+    state = loadedState;
+    saveState();
+    renderAll();
+    updateStats();
+    showToast('✅ Drive에서 불러오기 완료!');
+  } catch(e) {
+    showToast('❌ 오류: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
